@@ -96,9 +96,9 @@ def PCA(x):
     """
     mean = torch.mean(train_input, 0)
 
-    xsq = torch.mm(torch.transpose(x, 0, 1), x)
+    cov = (1 / (x.size()[1]) -1 ) * torch.mm((x-mean).t(), (x-mean)) 
     # get PCA basis from eigendecomposition 
-    eigvals, eigvecs = torch.eig(xsq, eigenvectors=True)
+    eigvals, eigvecs = torch.eig(cov, eigenvectors=True)
     # keep real data -is this ok ? 
     eigvals = eigvals[:,0]
     # sorted in decreasing order of eigenvalues 
