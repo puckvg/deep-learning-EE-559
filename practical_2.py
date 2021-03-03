@@ -64,8 +64,8 @@ def compute_nb_errors(train_input, train_target, test_input, test_target,
         test_input = test_input - mean 
 
     if proj is not None:
-        train_input = reconstruction(train_input, mean, proj)
-        test_input = reconstruction(train_input, mean, proj) 
+        train_input = torch.mm(train_input, proj.t())
+        test_input = torch.mm(test_input, proj.t()) 
 
     y_pred = torch.empty(test_input.shape[0])
     for i, x in enumerate(test_input): 
@@ -108,22 +108,11 @@ def PCA(x):
     return mean, basis
 
 
-def reconstruction(x, mean, basis):
-    if mean is None: 
-        mean = 0 
-    centred_x = x - mean 
-    inner_product = torch.mm(centred_x, basis.t())
-    inner_product_2 = torch.mm(inner_product, basis) 
-    reconstruction = mean + inner_product_2 
-    return reconstruction
-
-
 if __name__ == "__main__":
     # FIRST MNIST
     train_input, train_target, test_input, test_target = prologue.load_data()
 
     # project data on random 100d subspace 
-    # mean of train data? 
     mean = torch.mean(train_input, 0)
     random_basis = torch.empty((100, train_input.shape[1])).normal_()
     n_incorrect_random = compute_nb_errors(train_input, train_target, test_input, 
@@ -134,10 +123,24 @@ if __name__ == "__main__":
         mean, basis = PCA(train_input) 
         basis = basis[:n]
         n_incorrect_pca_n = compute_nb_errors(train_input, train_target, test_input, 
-                                            test_target, proj=basis)
+                                            test_target, mean=mean, proj=basis)
         print('n incorrect for pca with {} dim'.format(n), n_incorrect_pca_n)
     
 
-    # this is suspicious. probably did something wrong. 
+    # this is suspicious. probably did something wrong. shouldn't get so many wrong  
     # THEN CIFAR 
+    train_input, train_target, test_input, test_target = prologue.load_data(cifar=True)
 
+    # project data on random 100d subspace 
+    mean = torch.mean(train_input, 0)
+    random_basis = torch.empty((100, train_input.shape[1])).normal_()
+    n_incorrect_random = compute_nb_errors(train_input, train_target, test_input, 
+                                    test_target, mean=mean, proj=random_basis)
+    print('n incorrect for random projection', n_incorrect_random)
+
+    for n in [3, 10, 50, 100]:
+        mean, basis = PCA(train_input) 
+        basis = basis[:n]
+        n_incorrect_pca_n = compute_nb_errors(train_input, train_target, test_input, 
+                                            test_target, mean=mean, proj=basis)
+        print('n incorrect for pca with {} dim'.format(n), n_incorrect_pca_n)
