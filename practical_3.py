@@ -75,9 +75,11 @@ def step(x, t,
 
 
 def predict_score(x_test, t_test, w1, b1, w2, b2):
-    predictions = torch.empty(len(x_test),n_layer_2)
+    predictions = torch.zeros(len(x_test), t_test.shape[-1])
+
     for i in range(len(x_test)):
         _, _, _, _, pred = forward_pass(w1, b1, w2, b2, x_test[i])
+        predictions[i] = pred
 
     pred_index = torch.argmax(predictions, dim=-1)
 
@@ -86,8 +88,8 @@ def predict_score(x_test, t_test, w1, b1, w2, b2):
 
     # get number of nonzero (incorrect)
     incorrect = torch.count_nonzero(test_index - pred_index)
-    # percentage correct 
-    score = (len(x_test) - incorrect) / len(x_test) 
+    # percentage incorrect
+    score = 100 * incorrect / len(x_test) 
     return score
 
 
@@ -104,7 +106,7 @@ if __name__ == "__main__":
 
     n_layer_1 = 50
     n_layer_2 = 10
-    step_size = 0.1 / t.shape[0]
+    step_size = 0.1 / x.shape[0]
 
     # create four weight and bias tensors 
     # fill with random values samples from normal distribution N(0, 1e-6)
@@ -113,7 +115,7 @@ if __name__ == "__main__":
     w2 = torch.empty(n_layer_2, n_layer_1).normal_(mean=0, std=1e-6)
     b2 = torch.empty(n_layer_2).normal_(mean=0, std=1e-6)
 
-    for s in range(10):
+    for s in range(200):
         print('iter', s)
         # create tensors to sum up gradients 
         dl_dw1 = torch.zeros(w1.shape)
@@ -136,9 +138,9 @@ if __name__ == "__main__":
         b2 -= step_size * dl_db2
 
         train_score = predict_score(x, t, w1, b1, w2, b2)
-        print('train score', train_score)
+        print('train error', train_score)
         test_score = predict_score(x_test, t_test, w1, b1, w2, b2)
-        print('test score', test_score)
+        print('test error', test_score)
 
 
 
