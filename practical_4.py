@@ -18,32 +18,62 @@ class Net(nn.Module):
         self.fc2 = nn.Linear(n, 10)
 
     def forward(self, x):
+        #print('dim x', x.shape)
+        
+        # CONV LAYER 1
         x = F.relu(F.max_pool2d(self.conv1(x), kernel_size=3, stride=3))
+        #print('dim x after relu pool first conv', x.shape)
+
+        # CONV LAYER 2
         x = F.relu(F.max_pool2d(self.conv2(x), kernel_size=2, stride=2))
+        #print('dim x after relu pool second conv', x.shape)
+
+        # FC 1
         x = F.relu(self.fc1(x.view(-1, 256)))
+        #print('dim x after fc1', x.shape)
+
+        # FC2
         x = self.fc2(x)
+        #print('dim x after fc2', x.shape) 
         return x
 
 
 class Net2(nn.Module): 
-    def __init__(self, c=50, k1=5, k2=5, k3=2, pk1=3, pk2=2, s1=2, s2=2,
-                n1=200, n2=100):
+    def __init__(self, n=200):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 32, kernel_size=k1)
-        self.conv2 = nn.Conv2d(32, c, kernel_size=k2)
-        self.conv3 = nn.Conv2d(c, 64, kernel_size=k3)
-        self.fc1 = nn.Linear(256, n1)
-        self.fc2 = nn.Linear(n1, n2)
-        self.fc3 = nn.Linear(n2, 10)
+        # TODO these kernel sizes cant just be anything 
+        # throw bugs for a lot of smaller sizes
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=5)
+        self.conv2 = nn.Conv2d(32, 16, kernel_size=5)
+        self.conv3 = nn.Conv2d(16, 64, kernel_size=2)
+        self.fc1 = nn.Linear(256, n)
+        self.fc2 = nn.Linear(n, 10)
 
     def forward(self, x): 
-        x = F.relu(F.max_pool2d(self.conv1(x), kernel_size=pk1, stride=s1))
-        x = F.relu(F.max_pool2d(self.conv2(x), kernel_size=pk2, stride=s2))
-        x = F.relu(self.conv3(x))
+        #print('dim x', x.shape)
 
+        # CONV LAYER 1
+        x = F.relu(F.max_pool2d(self.conv1(x), kernel_size=2, stride=2))
+        # pooling just divides w, h by kernel size (provided stride=kernelsize)
+        #print('dim x after relu pool first conv', x.shape)
+
+        # CONV LAYER 2 
+        # TODO weirdly this only works when stride < kernel 
+        # otherwise it is reshaped into the wrong dimensions for the fc layers 
+        x = F.relu(F.max_pool2d(self.conv2(x), kernel_size=3, stride=2))
+        #print('dim x ater second conv', x.shape)
+
+        # CONV LAYER 3 
+        x = F.relu(self.conv3(x))
+        #print('dim x after third conv', x.shape)
+    
+        # FC1 
         x = F.relu(self.fc1(x.view(-1, 256)))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        #print('dim x after first connected layer', x.shape)
+
+        # FC2
+        x = self.fc2(x)
+        #print('dim x after second connected layer', x.shape)
         return x
 
 
@@ -132,24 +162,28 @@ if __name__ == "__main__":
 
     eta = 1e-1
     mini_batch_size = 100
-    nb_epochs = 10 
+    nb_epochs = 25
+    n = 200
 
     # NET 1 wrt hidden unit size
     #get_error_hidden_units(train_input, train_target, test_input, test_target) 
 
+    # try Net1 
+#    model, criterion = Net(n=n), nn.MSELoss()
+#    print('training Net 1')
+#    model = train_model(model, criterion, 
+#                        train_input, train_target, mini_batch_size, 
+#                        eta=eta, nb_epochs=nb_epochs, verbose=False)
+#    tr_score, te_score = get_train_test_error(model, train_input, train_target, 
+#                                              test_input, test_target, mini_batch_size)
+
+
     # try Net2 
-    n1 = 200
-    n2 = 100
-    model, criterion = Net2(n1=n1, n2=n2), nn.MSELoss()
+    model, criterion = Net2(n=n), nn.MSELoss()
     print('training Net 2')
     model = train_model(model, criterion,
                         train_input, train_target, mini_batch_size, 
                         eta=eta, nb_epochs=nb_epochs, verbose=False)
     tr_score, te_score = get_train_test_error(model, train_input, train_target,
                                               test_input, test_target, mini_batch_size)
-
-    # TO TRY: 
-    # - convergence with # hidden units in layer 1 and 2
-    # size/strides in kernels 
-    # size of pooling kernels 
 
