@@ -207,3 +207,8 @@ if __name__ == "__main__":
 
     # STRIDE connects pixels neighbours 
     # DILATION connects pixels far apart - background colour  
+    # Remember dimensions are 
+    # init N x C X W x L 
+    # conv N x D x W - w + 1 x L - l + 1 
+    # if using strides divide W and L by stride size 
+    # dilation etc more complicated 
