@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 
 class Net(nn.Module):
     def __init__(self, n=200):
+        # hard coding dims 
         super().__init__()
         self.conv1 = nn.Conv2d(1, 32, kernel_size=5)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=5)
@@ -18,23 +19,23 @@ class Net(nn.Module):
         self.fc2 = nn.Linear(n, 10)
 
     def forward(self, x):
-        #print('dim x', x.shape)
+        print('dim x', x.shape)
         
         # CONV LAYER 1
         x = F.relu(F.max_pool2d(self.conv1(x), kernel_size=3, stride=3))
-        #print('dim x after relu pool first conv', x.shape)
+        print('dim x after relu pool first conv', x.shape)
 
         # CONV LAYER 2
         x = F.relu(F.max_pool2d(self.conv2(x), kernel_size=2, stride=2))
-        #print('dim x after relu pool second conv', x.shape)
+        print('dim x after relu pool second conv', x.shape)
 
         # FC 1
         x = F.relu(self.fc1(x.view(-1, 256)))
-        #print('dim x after fc1', x.shape)
+        print('dim x after fc1', x.shape)
 
         # FC2
         x = self.fc2(x)
-        #print('dim x after fc2', x.shape) 
+        print('dim x after fc2', x.shape) 
         return x
 
 
@@ -155,35 +156,55 @@ def get_error_hidden_units(train_input, train_target,
     return 
 
 
+def train_net_1_iters(
+        train_input, train_target, test_input, test_target,
+        eta, mini_batch_size, nb_epochs, n
+        ):
+    model, criterion = Net(n=n), nn.MSELoss()
+    # try Net1 
+    for i in range(10):
+        print('iter',i)
+        print('training Net 1')
+        model = train_model(model, criterion, 
+                            train_input, train_target, mini_batch_size, 
+                            eta=eta, nb_epochs=nb_epochs, verbose=False)
+        tr_score, te_score = get_train_test_error(model, train_input, train_target, 
+                                                test_input, test_target, mini_batch_size)
+    return model  
+
+
+def train_net_2():
+    model, criterion = Net2(n=n), nn.MSELoss()
+    print('training Net 2')
+
+    model = train_model(model, criterion,
+                        train_input, train_target, mini_batch_size, 
+                        eta=eta, nb_epochs=nb_epochs, verbose=False)
+
+    tr_score, te_score = get_train_test_error(model, train_input, train_target,
+                                              test_input, test_target, mini_batch_size)
+    return model 
+
+
 if __name__ == "__main__":
     # SMALL DATA SET 
     train_input, train_target, test_input, test_target = \
     prologue.load_data(one_hot_labels = True, normalize = True, flatten = False)
 
     eta = 1e-1
-    mini_batch_size = 100
-    nb_epochs = 25
+    mini_batch_size = 1000
+    nb_epochs = 1
     n = 200
+
 
     # NET 1 wrt hidden unit size
     #get_error_hidden_units(train_input, train_target, test_input, test_target) 
+    #train_net_1_iters(train_input, train_target, test_input, test_target, eta, 
+    #                  mini_batch_size, nb_epochs, n)
 
-    # try Net1 
-#    model, criterion = Net(n=n), nn.MSELoss()
-#    print('training Net 1')
-#    model = train_model(model, criterion, 
-#                        train_input, train_target, mini_batch_size, 
-#                        eta=eta, nb_epochs=nb_epochs, verbose=False)
-#    tr_score, te_score = get_train_test_error(model, train_input, train_target, 
-#                                              test_input, test_target, mini_batch_size)
+    # NET 2 
+    #train_net_2()
 
 
-    # try Net2 
-    model, criterion = Net2(n=n), nn.MSELoss()
-    print('training Net 2')
-    model = train_model(model, criterion,
-                        train_input, train_target, mini_batch_size, 
-                        eta=eta, nb_epochs=nb_epochs, verbose=False)
-    tr_score, te_score = get_train_test_error(model, train_input, train_target,
-                                              test_input, test_target, mini_batch_size)
-
+    # STRIDE connects pixels neighbours 
+    # DILATION connects pixels far apart - background colour  
