@@ -19,62 +19,60 @@ class Net(nn.Module):
         self.fc2 = nn.Linear(n, 10)
 
     def forward(self, x):
-        print('dim x', x.shape)
-        
         # CONV LAYER 1
         x = F.relu(F.max_pool2d(self.conv1(x), kernel_size=3, stride=3))
-        print('dim x after relu pool first conv', x.shape)
 
         # CONV LAYER 2
         x = F.relu(F.max_pool2d(self.conv2(x), kernel_size=2, stride=2))
-        print('dim x after relu pool second conv', x.shape)
 
         # FC 1
         x = F.relu(self.fc1(x.view(-1, 256)))
-        print('dim x after fc1', x.shape)
 
         # FC2
         x = self.fc2(x)
-        print('dim x after fc2', x.shape) 
         return x
 
 
 class Net2(nn.Module): 
     def __init__(self, n=200):
         super().__init__()
-        # TODO these kernel sizes cant just be anything 
-        # throw bugs for a lot of smaller sizes
+        # EXPAND WITH CONV 
+        # THEN DECREASE WITH LINEAR 
         self.conv1 = nn.Conv2d(1, 32, kernel_size=5)
-        self.conv2 = nn.Conv2d(32, 16, kernel_size=5)
-        self.conv3 = nn.Conv2d(16, 64, kernel_size=2)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=5)
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=2)
         self.fc1 = nn.Linear(256, n)
         self.fc2 = nn.Linear(n, 10)
 
     def forward(self, x): 
-        #print('dim x', x.shape)
+        print('dim x', x.shape)
 
         # CONV LAYER 1
         x = F.relu(F.max_pool2d(self.conv1(x), kernel_size=2, stride=2))
         # pooling just divides w, h by kernel size (provided stride=kernelsize)
-        #print('dim x after relu pool first conv', x.shape)
+        print('dim x after relu pool first conv', x.shape)
 
         # CONV LAYER 2 
         # TODO weirdly this only works when stride < kernel 
         # otherwise it is reshaped into the wrong dimensions for the fc layers 
         x = F.relu(F.max_pool2d(self.conv2(x), kernel_size=3, stride=2))
-        #print('dim x ater second conv', x.shape)
+        print('dim x ater second conv', x.shape)
 
         # CONV LAYER 3 
         x = F.relu(self.conv3(x))
-        #print('dim x after third conv', x.shape)
+        # Needs to be 1000 x 256 
+        print('dim x after third conv', x.shape)
     
         # FC1 
-        x = F.relu(self.fc1(x.view(-1, 256)))
-        #print('dim x after first connected layer', x.shape)
+        rs = x.view(-1,256)
+        print('rs shape', rs.shape)
+
+        x = F.relu(self.fc1(rs))
+        print('dim x after first connected layer', x.shape)
 
         # FC2
         x = self.fc2(x)
-        #print('dim x after second connected layer', x.shape)
+        print('dim x after second connected layer', x.shape)
         return x
 
 
@@ -173,7 +171,9 @@ def train_net_1_iters(
     return model  
 
 
-def train_net_2():
+def train_net_2(train_input, train_target, 
+                test_input, test_target,
+                mini_batch_size, eta, nb_epochs, n):
     model, criterion = Net2(n=n), nn.MSELoss()
     print('training Net 2')
 
@@ -196,15 +196,14 @@ if __name__ == "__main__":
     nb_epochs = 1
     n = 200
 
-
     # NET 1 wrt hidden unit size
     #get_error_hidden_units(train_input, train_target, test_input, test_target) 
     #train_net_1_iters(train_input, train_target, test_input, test_target, eta, 
     #                  mini_batch_size, nb_epochs, n)
 
     # NET 2 
-    #train_net_2()
-
+    train_net_2(train_input, train_target, test_input, test_target, mini_batch_size, 
+                eta, nb_epochs, n)
 
     # STRIDE connects pixels neighbours 
     # DILATION connects pixels far apart - background colour  
